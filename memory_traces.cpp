@@ -5,29 +5,18 @@
 
 class Frame{
     unsigned int page;
-    int time_since_allocated;
+    // int time_since_allocated;
+    unsigned int page_index;
 
 public:
     Frame(){
-        time_since_allocated = 0;
+        page_index = 0;
         page = 0; 
     }
 
-    Frame(unsigned int page){
+    Frame(unsigned int page, unsigned int page_index){
         this->page = page;
-        time_since_allocated = 0;
-    }
-
-    void iterateTime(){
-        time_since_allocated++;
-    }
-
-    void callPage(){
-        
-    }
-
-    static void iterateTimeForAll(std::vector<Frame>& frames){
-        for (auto it : frames) it.iterateTime();
+        this->page_index = page_index;
     }
 
 };
@@ -51,19 +40,20 @@ static std::vector<unsigned int> chargePageAccesses(const char *filename){
 
 //there is no page fault when allocating frames to the first n free frames
 void populateFirstIterations(int available_frames, std::vector<unsigned int> &addresses, std::vector<Frame> &frames){
-
     for(int i = 0; i < available_frames; i++){
-        frames[i] = Frame();
-        Frame::iterateTimeForAll(frames);
+        frames[i] = Frame(addresses[i], i);
     }
-    
 }
 
 int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresses){
 
     std::vector<Frame> frames(available_frames, Frame());
-    int page_faults{0};
+    int page_faults = available_frames;
     populateFirstIterations(available_frames, addresses, frames);
+
+    for(int i = available_frames; i < addresses.size(); i++){
+        Frame frame_teste(addresses[i], i);
+    }
 
     return page_faults;
 }
@@ -73,10 +63,11 @@ int main(int argc, const char **argv){
     std::vector<unsigned int> addresses = chargePageAccesses(argv[1]);
     int available_frames = atoi(argv[2]);
     int total_page_faults = getTotalPageFaults(available_frames, addresses);
+    std::cout << "page faults inicial = " << total_page_faults << std::endl;
 
-    for(auto it: addresses){
-        std::cout << std::hex << " " << it << "\n";
-    }
+    // for(auto it: addresses){
+    //     std::cout << std::hex << " " << it << "\n";
+    // }
     
     return 0;
 }
