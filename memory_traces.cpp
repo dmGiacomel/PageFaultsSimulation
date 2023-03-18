@@ -51,9 +51,9 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
     int page_faults = available_frames;
     populateFirstIterations(available_frames, addresses, frames);
 
-    for(int i = available_frames; i < addresses.size(); i++){
-        Frame frame_teste(addresses[i], i);
-    }
+    // for(int i = available_frames; i < addresses.size(); i++){
+    //     Frame frame_teste(addresses[i], i);
+    // }
 
     return page_faults;
 }
