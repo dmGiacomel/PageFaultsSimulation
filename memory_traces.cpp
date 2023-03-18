@@ -27,6 +27,7 @@ public:
 };
 
 static std::vector<unsigned int> chargePageAccesses(const char *filename){
+    
     std::ifstream fin;
     std::string line;
     std::vector<unsigned int> addresses;
@@ -39,7 +40,7 @@ static std::vector<unsigned int> chargePageAccesses(const char *filename){
 
     line.clear();
     fin.close();
-
+    // std::cout << "chegou aqui\n";
     return addresses;
 }
 
@@ -53,17 +54,21 @@ void populateFirstIterations(int available_frames, std::vector<unsigned int> &ad
 int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresses){
 
     int menor_index = 1000000, index_frame;
-    bool is_in_frames = false;
     std::vector<Frame> frames(available_frames, Frame());
     int page_faults = available_frames;
     populateFirstIterations(available_frames, addresses, frames);
+    
 
     // continua lendo os acessos de endereços
     for(int i = available_frames; i < addresses.size(); i++){
+        bool is_in_frames = false;
         Frame frame_teste(addresses[i], i);
+        // std::cout << "frame_teste.page = " << frame_teste.page << std::endl;
         for(int j = 0; j < available_frames; j++){
-            if(frame_teste.page == frames[j].page)
+            if(frame_teste.page == frames[j].page){
+                // std::cout << "pagina chamada = " << frame_teste.page << "\n pagina atual = " << frames[j].page << std::endl;
                 is_in_frames = true;
+            }
 
             // ja pega os índices aqui caso precise pra não ter que
             // percorrer os frames de novo depois
@@ -80,15 +85,21 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
 }
 
 int main(int argc, const char **argv){
-
+    
     std::vector<unsigned int> addresses = chargePageAccesses(argv[1]);
+    std::cout << "vendo addresses\n";
+    for(auto it = addresses.begin(); it < addresses.end(); it++){
+       
+        std::cout << *it << std::endl;
+    }
     int available_frames = atoi(argv[2]);
     int total_page_faults = getTotalPageFaults(available_frames, addresses);
-    std::cout << "page faults inicial = " << total_page_faults << std::endl;
+    
+    std::cout << "page faults no LRU = " << total_page_faults << std::endl;
 
-    for(auto it: addresses){
-        std::cout << std::hex << " " << it << "\n";
-    }
+    // for(auto it: addresses){
+    //     std::cout << std::hex << " " << it << "\n";
+    // }
     
     return 0;
 }
