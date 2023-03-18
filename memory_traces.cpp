@@ -46,18 +46,28 @@ static std::vector<unsigned int> chargePageAccesses(const char *filename){
 }
 
 //there is no page fault when allocating frames to the first n free frames
-void populateFirstIterations(int available_frames, std::vector<unsigned int> &addresses, std::vector<Frame> &frames){
+unsigned int populateFirstIterations(int available_frames, std::vector<unsigned int> &addresses, std::vector<Frame> &frames){
+    unsigned int falhas_iniciais = 0;
+    bool is_in_frames = false;
+
     for(int i = 0; i < available_frames; i++){
-        frames[i] = Frame(addresses[i], i);
+        for(int j = 0; j < available_frames; j++){
+            if(frames[j].page == addresses[i]){
+                is_in_frames = true;
+            }
+        }
+        if(!is_in_frames)
+            frames[i] = Frame(addresses[i], i), falhas_iniciais++;
     }
+
+    return falhas_iniciais;
 }
 
 int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresses){
 
     int menor_index = 1000000, index_frame;
     std::vector<Frame> frames(available_frames, Frame());
-    int page_faults = available_frames;
-    populateFirstIterations(available_frames, addresses, frames);
+    int page_faults = populateFirstIterations(available_frames, addresses, frames);
     
 
     // continua lendo os acessos de endereços
