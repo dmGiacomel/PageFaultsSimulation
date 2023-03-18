@@ -1,14 +1,19 @@
+// ao executar, devem ser passados os seguintes argumentos (respectivamente)
+// arquivo de entrada .txt      quantidade de frames livres
+
+
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
 
 class Frame{
+
+public:
     unsigned int page;
     // int time_since_allocated;
     unsigned int page_index;
 
-public:
     Frame(){
         page_index = 0;
         page = 0; 
@@ -47,13 +52,29 @@ void populateFirstIterations(int available_frames, std::vector<unsigned int> &ad
 
 int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresses){
 
+    int menor_index = 1000000, index_frame;
+    bool is_in_frames = false;
     std::vector<Frame> frames(available_frames, Frame());
     int page_faults = available_frames;
     populateFirstIterations(available_frames, addresses, frames);
 
-    // for(int i = available_frames; i < addresses.size(); i++){
-    //     Frame frame_teste(addresses[i], i);
-    // }
+    // continua lendo os acessos de endereços
+    for(int i = available_frames; i < addresses.size(); i++){
+        Frame frame_teste(addresses[i], i);
+        for(int j = 0; j < available_frames; j++){
+            if(frame_teste.page == frames[j].page)
+                is_in_frames = true;
+
+            // ja pega os índices aqui caso precise pra não ter que
+            // percorrer os frames de novo depois
+            if(frames[j].page_index < menor_index)
+                menor_index = frames[j].page_index, index_frame = j;
+        }
+        if(!is_in_frames){
+            page_faults++;
+            frames[index_frame] = frame_teste;
+        }
+    }
 
     return page_faults;
 }
@@ -65,9 +86,9 @@ int main(int argc, const char **argv){
     int total_page_faults = getTotalPageFaults(available_frames, addresses);
     std::cout << "page faults inicial = " << total_page_faults << std::endl;
 
-    // for(auto it: addresses){
-    //     std::cout << std::hex << " " << it << "\n";
-    // }
+    for(auto it: addresses){
+        std::cout << std::hex << " " << it << "\n";
+    }
     
     return 0;
 }
