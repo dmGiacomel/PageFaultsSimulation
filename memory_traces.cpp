@@ -28,6 +28,7 @@ public:
 
 static std::vector<unsigned int> chargePageAccesses(const char *filename){
     
+    int aux = 0;
     std::ifstream fin;
     std::string line;
     std::vector<unsigned int> addresses;
@@ -35,12 +36,12 @@ static std::vector<unsigned int> chargePageAccesses(const char *filename){
 
     fin.open(filename);
 
-    while (std::getline(fin, line))
+    while (std::getline(fin, line)){
         addresses.push_back((std::stoul(line, nullptr, 16) & mask) >> 12);
+    }
 
     line.clear();
     fin.close();
-    // std::cout << "chegou aqui\n";
     return addresses;
 }
 
@@ -87,19 +88,16 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
 int main(int argc, const char **argv){
     
     std::vector<unsigned int> addresses = chargePageAccesses(argv[1]);
-    std::cout << "vendo addresses\n";
-    for(auto it = addresses.begin(); it < addresses.end(); it++){
-       
-        std::cout << *it << std::endl;
-    }
+    // std::cout << "vendo addresses\n";
+    // for(auto it: addresses){
+    //     std::cout << std::hex << " " << it << "\n";
+    // }
     int available_frames = atoi(argv[2]);
     int total_page_faults = getTotalPageFaults(available_frames, addresses);
     
     std::cout << "page faults no LRU = " << total_page_faults << std::endl;
 
-    // for(auto it: addresses){
-    //     std::cout << std::hex << " " << it << "\n";
-    // }
+
     
     return 0;
 }
