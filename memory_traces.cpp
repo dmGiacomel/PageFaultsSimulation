@@ -48,9 +48,10 @@ static std::vector<unsigned int> chargePageAccesses(const char *filename){
 //there is no page fault when allocating frames to the first n free frames
 unsigned int populateFirstIterations(int available_frames, std::vector<unsigned int> &addresses, std::vector<Frame> &frames){
     unsigned int falhas_iniciais = 0;
-    bool is_in_frames = false;
+    
 
     for(int i = 0; i < available_frames; i++){
+        bool is_in_frames = false;
         for(int j = 0; j < available_frames; j++){
             if(frames[j].page == addresses[i]){
                 is_in_frames = true;
@@ -67,17 +68,17 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
 
     int menor_index = 1000000, index_frame;
     std::vector<Frame> frames(available_frames, Frame());
+    std::cout << "frame vazio = " << frames[0].page << std::endl;
     int page_faults = populateFirstIterations(available_frames, addresses, frames);
-    
 
     // continua lendo os acessos de endereços
     for(int i = available_frames; i < addresses.size(); i++){
         bool is_in_frames = false;
         Frame frame_teste(addresses[i], i);
-        // std::cout << "frame_teste.page = " << frame_teste.page << std::endl;
+
+
         for(int j = 0; j < available_frames; j++){
             if(frame_teste.page == frames[j].page){
-                // std::cout << "pagina chamada = " << frame_teste.page << "\n pagina atual = " << frames[j].page << std::endl;
                 is_in_frames = true;
             }
 
@@ -86,9 +87,23 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
             if(frames[j].page_index < menor_index)
                 menor_index = frames[j].page_index, index_frame = j;
         }
+
         if(!is_in_frames){
+            bool alr_put = false;
             page_faults++;
-            frames[index_frame] = frame_teste;
+
+            // primeiro ve se tem algum frame vazio pra colocar
+            for(auto it: frames){
+                if(it.page == 0){
+                    it = frame_teste;
+                    alr_put = true;
+                    break;
+                }
+            }
+
+            // se não, pega o menor índice e substitui
+            if(!alr_put)
+                frames[index_frame] = frame_teste;
         }
     }
 
