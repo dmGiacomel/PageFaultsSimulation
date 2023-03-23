@@ -46,8 +46,25 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
     std::vector<Frame> frames(available_frames, Frame());
     std::map<unsigned int, unsigned char> bits_referencia;
     std::map<unsigned int, bool> foi_chamado;
+    unsigned char chegou = 0x80;
 
+    int falhas_iniciais = 0;
+    for(int i = 0; i < available_frames; i++){
+        bool is_in_frames = false;
+        for(int j = 0; j < available_frames; j++){
+            if(frames[j].page == addresses[i]){
+                is_in_frames = true;
+            }
+        }
+        if(!is_in_frames){
+            frames[i] = Frame(addresses[i], i); 
+            falhas_iniciais++;
+            bits_referencia.insert({addresses[i], chegou});
+            foi_chamado.insert({addresses[i], true});
+        }
+    }
     
+
 
 }
 
