@@ -63,7 +63,14 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
             foi_chamado.insert({addresses[i], true});
         }
     }
-    
+
+    for(int i = available_frames; i < addresses.size(); i++){
+        // quando o clock disparar
+        // reinicializar o map foi_chamado
+        // e deslocar os bits_referencia de acordo com o map foi_chamado
+
+        // quando for subsituir, escolher a página com menor número do map bits_referencia
+    }   
 
 
 }
