@@ -98,6 +98,7 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
     clock_t now = clock();
 
     while(clock() - now < delay){
+        std::cout << "entrou no while\n";
         for(i = ind_atual; i < addresses.size(); i++){
             std::cout << "addresses.size() dentro do for = " << addresses.size() << std::endl;
             int menor_index = 1000000, index_frame;
@@ -177,7 +178,11 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
 
             goto reinicia_loop;   // recomeça o loop
         }
+        else{
+            goto end;
+        }
     }
+    end:
     return page_faults;
 }
 
