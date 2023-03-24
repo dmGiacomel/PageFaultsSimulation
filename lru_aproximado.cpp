@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include<ctime>
 
 class Frame{
 
@@ -23,24 +24,23 @@ public:
 
 };
 
-//there is no page fault when allocating frames to the first n free frames
-unsigned int populateFirstIterations(int available_frames, std::vector<unsigned int> &addresses, std::vector<Frame> &frames){
-    unsigned int falhas_iniciais = 0;
+// unsigned int populateFirstIterations(int available_frames, std::vector<unsigned int> &addresses, std::vector<Frame> &frames){
+//     unsigned int falhas_iniciais = 0;
     
 
-    for(int i = 0; i < available_frames; i++){
-        bool is_in_frames = false;
-        for(int j = 0; j < available_frames; j++){
-            if(frames[j].page == addresses[i]){
-                is_in_frames = true;
-            }
-        }
-        if(!is_in_frames)
-            frames[i] = Frame(addresses[i], i), falhas_iniciais++;
-    }
+//     for(int i = 0; i < available_frames; i++){
+//         bool is_in_frames = false;
+//         for(int j = 0; j < available_frames; j++){
+//             if(frames[j].page == addresses[i]){
+//                 is_in_frames = true;
+//             }
+//         }
+//         if(!is_in_frames)
+//             frames[i] = Frame(addresses[i], i), falhas_iniciais++;
+//     }
 
-    return falhas_iniciais;
-}
+//     return falhas_iniciais;
+// }
 
 int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresses){
     std::vector<Frame> frames(available_frames, Frame());
@@ -60,19 +60,88 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
             frames[i] = Frame(addresses[i], i); 
             falhas_iniciais++;
             bits_referencia.insert({addresses[i], chegou});
+
+            // printando o map bits_referencia
+            for(const auto& elem : bits_referencia){
+                std::cout << elem.first << " " << elem.second << "\n";
+            }
+
             foi_chamado.insert({addresses[i], true});
+
+            // printando o map foi_chamado
+            for(const auto& elem : foi_chamado){
+                std::cout << elem.first << " " << elem.second << "\n";
+            }
         }
     }
 
-    for(int i = available_frames; i < addresses.size(); i++){
-        // quando o clock disparar
-        // reinicializar o map foi_chamado
-        // e deslocar os bits_referencia de acordo com o map foi_chamado
+    int page_faults = falhas_iniciais;
 
-        // quando for subsituir, escolher a página com menor número do map bits_referencia
-    }   
+    
+    // quando o clock disparar
+    // reinicializar o map foi_chamado
+    // e deslocar os bits_referencia de acordo com o map foi_chamado
+    int ind_atual = available_frames;
+    int delay = 1000;
+    delay *= CLOCKS_PER_SEC;
+    int i;
 
+    reinicia_loop:
+    clock_t now = clock();
 
+    while(clock() - now < delay){
+        for(i = ind_atual; i < addresses.size(); i++){
+            int menor_index = 1000000, index_frame;
+            bool is_in_frames = false;
+            Frame frame_teste(addresses[i], i);
+
+            std::cout << "mostrando frames\n";
+            for(auto it: frames){
+                std::cout << std::hex << " " << it.page << " - " << it.page_index << std::endl;
+            }
+
+            // varre o vetor de frames para ver se
+            // a página já está lá
+            for(int j = 0; j < available_frames; j++){
+                if(frame_teste.page == frames[j].page){
+                    is_in_frames = true;
+
+                    // atualiza o index (para constar que a paǵina foi usada novamente)
+                    frames[j].page_index = frame_teste.page_index;
+                }
+            }
+            // std::cout << "posição da pagina com menor index == " << index_frame << std::endl;
+
+            // se não estiver nos frames, substitui por aquele
+            // com menor frame ou coloca em um frame vazio
+            if(!is_in_frames){
+                bool alr_put = false; // já colocou no frame?
+                page_faults++; // de qualquer forma, ocorreu uma falha de página
+
+                // primeiro ve se tem algum frame vazio pra colocar
+                for(int k = 0; k < available_frames; k++){
+                    if(frames[k].page == 0){
+                        std::cout << "entrou no frame vazio, com k = " << k << std::endl;
+                        frames[k].page = frame_teste.page;
+                        frames[k].page_index = frame_teste.page_index;
+                        alr_put = true;
+                        break;
+                    }
+                }
+                
+                // se não, pega o menor índice e substitui
+                // quando for subsituir, escolher a página com menor número do map bits_referencia
+                if(!alr_put){
+                    std::cout << "entrou na substituição por menor\n";
+                    
+                }
+            }
+        }
+        if(i < addresses.size()){ // ainda não terminou de processar as páginas
+            goto reinicia_loop;   // recomeça o loop
+        }
+    }
+    return page_faults;
 }
 
 static std::vector<unsigned int> chargePageAccesses(const char *filename){
@@ -95,9 +164,10 @@ static std::vector<unsigned int> chargePageAccesses(const char *filename){
 }
 
 int main(int argc, const char **argv){
-    
+    std::cout << "entrou na main" << std::endl;
+
     std::vector<unsigned int> addresses = chargePageAccesses(argv[1]);
-    // std::cout << "vendo addresses\n";
+    std::cout << "vendo addresses\n";
     // for(auto it: addresses){
     //     std::cout << std::hex << " " << it << "\n";
     // }
