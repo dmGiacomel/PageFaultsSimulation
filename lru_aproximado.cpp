@@ -48,6 +48,9 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
     std::map<unsigned int, bool> foi_chamado;
     unsigned char chegou = 0x80;
 
+
+    // coloquei o populateFirstIterations aqui porque fica mais fácil
+    // de controlar e entender
     int falhas_iniciais = 0;
     for(int i = 0; i < available_frames; i++){
         bool is_in_frames = false;
@@ -62,6 +65,7 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
             bits_referencia.insert({addresses[i], chegou});
 
             // printando o map bits_referencia
+            std::cout << "map bits_referencia\n";
             for(const auto& elem : bits_referencia){
                 std::cout << elem.first << " " << elem.second << "\n";
             }
@@ -69,6 +73,7 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
             foi_chamado.insert({addresses[i], true});
 
             // printando o map foi_chamado
+            std::cout << "map foi_chamado\n";
             for(const auto& elem : foi_chamado){
                 std::cout << elem.first << " " << elem.second << "\n";
             }
@@ -81,6 +86,9 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
     // quando o clock disparar
     // reinicializar o map foi_chamado
     // e deslocar os bits_referencia de acordo com o map foi_chamado
+    
+    // vamos precisar armazenar o índice em que parou no clock
+    // inicia em available_frames
     int ind_atual = available_frames;
     int delay = 1000;
     delay *= CLOCKS_PER_SEC;
@@ -105,9 +113,9 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
             for(int j = 0; j < available_frames; j++){
                 if(frame_teste.page == frames[j].page){
                     is_in_frames = true;
-
                     // atualiza o index (para constar que a paǵina foi usada novamente)
                     frames[j].page_index = frame_teste.page_index;
+                    foi_chamado[frame_teste.page] = true; // diz que foi chamada nesse intervalo
                 }
             }
             // std::cout << "posição da pagina com menor index == " << index_frame << std::endl;
@@ -133,11 +141,36 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
                 // quando for subsituir, escolher a página com menor número do map bits_referencia
                 if(!alr_put){
                     std::cout << "entrou na substituição por menor\n";
-                    
+                    for(int k = 0; k < available_frames; k++){
+                        if(menor_index > bits_referencia[frames[k].page]){
+                            menor_index = k;
+                        }
+                    }
+                    frames[menor_index].page = frame_teste.page;
+                    frames[menor_index].page_index = frame_teste.page_index;
                 }
             }
         }
         if(i < addresses.size()){ // ainda não terminou de processar as páginas
+            ind_atual = i - 1; // ajusta o índice atual
+            std::cout << "valor de i = " << i << std::endl;
+            // fazer shift dos bits de referencia adicionais de acordo
+            // com o map foi_chamado
+            for(auto it: bits_referencia){
+                if(foi_chamado[it.first]){
+                    it.second >> 1; // faz shift pra direita em um bit
+                    it.second | 0x80; // como foi chamado, faz OR com 10000000
+                }
+                else{
+                    it.second >> 1; // só faz shift pra direita em um bit, sem OR
+                }
+            }
+
+            // reinicializar o map foi_chamado
+            for(auto it: foi_chamado){
+                it.second = false;
+            }
+
             goto reinicia_loop;   // recomeça o loop
         }
     }
@@ -171,8 +204,10 @@ int main(int argc, const char **argv){
     // for(auto it: addresses){
     //     std::cout << std::hex << " " << it << "\n";
     // }
-    int available_frames = atoi(argv[2]);
 
+    int available_frames = atoi(argv[2]);
+    int total_page_faults = getTotalPageFaults(available_frames, addresses);
+    std::cout << "page faults no LRU = " << total_page_faults << std::endl;
 
     return 0;
 }
