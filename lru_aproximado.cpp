@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include<ctime>
+#include <ctime>
 
 class Frame{
 
@@ -63,20 +63,7 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
             frames[i] = Frame(addresses[i], i); 
             falhas_iniciais++;
             bits_referencia.insert({addresses[i], chegou});
-
-            // printando o map bits_referencia
-            std::cout << "map bits_referencia\n";
-            for(const auto& elem : bits_referencia){
-                std::cout << std::hex << elem.first << " " << std::hex << elem.second << "\n";
-            }
-
             foi_chamado.insert({addresses[i], true});
-
-            // printando o map foi_chamado
-            std::cout << "map foi_chamado\n";
-            for(const auto& elem : foi_chamado){
-                std::cout << std::hex << elem.first << " " << std::hex << elem.second << "\n";
-            }
         }
     }
 
@@ -90,99 +77,119 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
     // vamos precisar armazenar o índice em que parou no clock
     // inicia em available_frames
     int ind_atual = available_frames;
-    int delay = 1;
+    int delay = 0.01;
     delay *= CLOCKS_PER_SEC;
     int i;
 
-    reinicia_loop:
+    //reinicia_loop:
     clock_t now = clock();
 
-    while(clock() - now < delay){
-        std::cout << "entrou no while\n";
-        for(i = ind_atual; i < addresses.size(); i++){
-            std::cout << "addresses.size() dentro do for = " << addresses.size() << std::endl;
-            int menor_index = 1000000, index_frame;
-            bool is_in_frames = false;
-            Frame frame_teste(addresses[i], i);
+    // while(clock() - now < delay){
+    //std::cout << "entrou no while\n";
+    for(i = ind_atual; i < addresses.size(); i++){
 
-            std::cout << "mostrando frames\n";
-            for(auto it: frames){
-                std::cout << std::hex << " " << it.page << " - " << it.page_index << std::endl;
+        // std::cout << "bits de referencia" << std::hex << std::endl;
+        // for(auto it : bits_referencia){
+        //     std::cout << it.first << " " << u_int(it.second) << "\n";
+        // }
+        // std::cout << "foi chamado" << std::endl;
+        // for(auto it : foi_chamado){
+        //     std::cout << it.first << " " << it.second << "\n";
+        // }
+
+        if((clock() - now) * CLOCKS_PER_SEC >= delay){
+            // std::cout << "entrei aquiii\n";
+            if(i < addresses.size()){ // ainda não terminou de processar as páginas
+                //ind_atual = i; // ajusta o índice atual
+                //std::cout << "valor de i dentro do if = " << i << std::endl;
+                // fazer shift dos bits de referencia adicionais de acordo
+                // com o map foi_chamado
+                for(auto& it: bits_referencia){
+                    if(foi_chamado[it.first]){
+                        it.second = it.second >> 1; // faz shift pra direita em um bit
+                        it.second = it.second | 0x80; // como foi chamado, faz OR com 10000000
+                    }
+                    else{
+                        it.second = it.second >> 1; // só faz shift pra direita em um bit, sem OR
+                    }
+                }
+
+                // reinicializar o map foi_chamado
+                for(auto& it: foi_chamado){
+                    it.second = false;
+                }
+                //std::cout << "ta indo no reinicia_loop\n";
+                now = clock();
+                //goto reinicia_loop;   // recomeça o loop
             }
+        }
+        //std::cout << "addresses.size() dentro do for = " << addresses.size() << std::endl;
+        int menor_index = 1000000, index_frame;
+        bool is_in_frames = false;
+        Frame frame_teste(addresses[i], i);
 
-            // varre o vetor de frames para ver se
-            // a página já está lá
-            for(int j = 0; j < available_frames; j++){
-                if(frame_teste.page == frames[j].page){
-                    is_in_frames = true;
-                    // atualiza o index (para constar que a paǵina foi usada novamente)
-                    frames[j].page_index = frame_teste.page_index;
-                    foi_chamado[frame_teste.page] = true; // diz que foi chamada nesse intervalo
+        foi_chamado[frame_teste.page] = true; // diz que foi chamada nesse intervalo
+        // std::cout << "mostrando frames\n";
+        // for(auto it: frames){
+        //     std::cout << std::hex << " " << it.page << " - " << it.page_index << std::endl;
+        // }
+
+        // varre o vetor de frames para ver se
+        // a página já está lá
+        for(int j = 0; j < available_frames; j++){
+            if(frame_teste.page == frames[j].page){
+                is_in_frames = true;
+                // atualiza o index (para constar que a paǵina foi usada novamente)
+                frames[j].page_index = frame_teste.page_index;
+            }
+        }
+        // std::cout << "posição da pagina com menor index == " << index_frame << std::endl;
+
+        // se não estiver nos frames, substitui por aquele
+        // com menor frame ou coloca em um frame vazio
+        if(!is_in_frames){
+            bool alr_put = false; // já colocou no frame?
+            page_faults++; // de qualquer forma, ocorreu uma falha de página
+
+            // primeiro ve se tem algum frame vazio pra colocar
+            for(int k = 0; k < available_frames; k++){
+                if(frames[k].page == 0){
+                    //std::cout << "entrou no frame vazio, com k = " << k << std::endl;
+                    frames[k].page = frame_teste.page;
+                    frames[k].page_index = frame_teste.page_index;
+                    alr_put = true;
+                    bits_referencia[frame_teste.page] = chegou;
+                    foi_chamado[frame_teste.page] = true;
+                    break;
                 }
             }
-            // std::cout << "posição da pagina com menor index == " << index_frame << std::endl;
-
-            // se não estiver nos frames, substitui por aquele
-            // com menor frame ou coloca em um frame vazio
-            if(!is_in_frames){
-                bool alr_put = false; // já colocou no frame?
-                page_faults++; // de qualquer forma, ocorreu uma falha de página
-
-                // primeiro ve se tem algum frame vazio pra colocar
+            
+            // se não, pega o menor índice e substitui
+            // quando for subsituir, escolher a página com menor número do map bits_referencia
+            if(!alr_put){
+                int index_frame = 0;
+                //std::cout << "entrou na substituição por menor\n";
                 for(int k = 0; k < available_frames; k++){
-                    if(frames[k].page == 0){
-                        std::cout << "entrou no frame vazio, com k = " << k << std::endl;
-                        frames[k].page = frame_teste.page;
-                        frames[k].page_index = frame_teste.page_index;
-                        alr_put = true;
-                        break;
+                    if(menor_index > bits_referencia[frames[k].page]){
+                        menor_index = bits_referencia[frames[k].page];
+                        index_frame = k;
                     }
                 }
-                
-                // se não, pega o menor índice e substitui
-                // quando for subsituir, escolher a página com menor número do map bits_referencia
-                if(!alr_put){
-                    std::cout << "entrou na substituição por menor\n";
-                    for(int k = 0; k < available_frames; k++){
-                        if(menor_index > bits_referencia[frames[k].page]){
-                            menor_index = k;
-                        }
-                    }
-                    frames[menor_index].page = frame_teste.page;
-                    frames[menor_index].page_index = frame_teste.page_index;
+                if(bits_referencia.find(frame_teste.page)==bits_referencia.end()){
+                    bits_referencia[frame_teste.page] = chegou;
                 }
+                foi_chamado[frame_teste.page] = true;
+                frames[index_frame].page = frame_teste.page;
+                frames[index_frame].page_index = frame_teste.page_index;
             }
-            std::cout << "valor de i = " << i << std::endl;
         }
-        std::cout << "valor de i fora do for = " << i << std::endl;
-        std::cout << "addresses.size() = " << addresses.size() << std::endl;
-        if(i < addresses.size()){ // ainda não terminou de processar as páginas
-            ind_atual = i - 1; // ajusta o índice atual
-            std::cout << "valor de i = " << i << std::endl;
-            // fazer shift dos bits de referencia adicionais de acordo
-            // com o map foi_chamado
-            for(auto it: bits_referencia){
-                if(foi_chamado[it.first]){
-                    it.second >> 1; // faz shift pra direita em um bit
-                    it.second | 0x80; // como foi chamado, faz OR com 10000000
-                }
-                else{
-                    it.second >> 1; // só faz shift pra direita em um bit, sem OR
-                }
-            }
-
-            // reinicializar o map foi_chamado
-            for(auto it: foi_chamado){
-                it.second = false;
-            }
-
-            goto reinicia_loop;   // recomeça o loop
-        }
-        else{
-            goto end;
-        }
+        //std::cout << "valor de i = " << i << std::endl;
     }
-    end:
+        
+    // }
+    //std::cout << "valor de i fora do for = " << i << std::endl;
+    //std::cout << "addresses.size() = " << addresses.size() << std::endl;
+    
     return page_faults;
 }
 
@@ -206,10 +213,11 @@ static std::vector<unsigned int> chargePageAccesses(const char *filename){
 }
 
 int main(int argc, const char **argv){
-    std::cout << "entrou na main" << std::endl;
+    // std::cout << "entrou na main" << std::endl;
 
-    std::vector<unsigned int> addresses = chargePageAccesses(argv[1]);
-    std::cout << "vendo addresses\n";
+    // std::vector<unsigned int> addresses = chargePageAccesses(argv[1]);
+    // std::cout << "tamanho de addresses = " << addresses.size() << std::endl; 
+    // std::cout << "vendo addresses\n";
     // for(auto it: addresses){
     //     std::cout << std::hex << " " << it << "\n";
     // }

@@ -1,11 +1,11 @@
 // ao executar, devem ser passados os seguintes argumentos (respectivamente)
 // arquivo de entrada .txt      quantidade de frames livres
 
-
-#include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
+#include <iostream>
+
 
 class Frame{
 
@@ -48,7 +48,6 @@ static std::vector<unsigned int> chargePageAccesses(const char *filename){
 //there is no page fault when allocating frames to the first n free frames
 unsigned int populateFirstIterations(int available_frames, std::vector<unsigned int> &addresses, std::vector<Frame> &frames){
     unsigned int falhas_iniciais = 0;
-    
 
     for(int i = 0; i < available_frames; i++){
         bool is_in_frames = false;
@@ -67,12 +66,12 @@ unsigned int populateFirstIterations(int available_frames, std::vector<unsigned 
 int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresses){
     
     std::vector<Frame> frames(available_frames, Frame());
-    std::cout << "frame vazio = " << frames[0].page << std::endl;
+    // std::cout << "frame vazio = " << frames[0].page << std::endl;
 
     // coloca as páginas nos frames vazios iniciais
     // e contabiliza quantas falhas ocorreram
     int page_faults = populateFirstIterations(available_frames, addresses, frames);
-    std::cout << "falhas de páginas inciais = " << page_faults << std::endl;
+    // std::cout << "falhas de páginas inciais = " << page_faults << std::endl;
 
     // continua lendo os acessos de endereços
     for(int i = available_frames; i < addresses.size(); i++){
@@ -80,10 +79,10 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
         bool is_in_frames = false;
         Frame frame_teste(addresses[i], i);
 
-        std::cout << "mostrando frames\n";
-        for(auto it: frames){
-            std::cout << std::hex << " " << it.page << " - " << it.page_index << std::endl;
-        }
+        // std::cout << "mostrando frames\n";
+        // for(auto it: frames){
+        //     std::cout << std::hex << " " << it.page << " - " << it.page_index << std::endl;
+        // }
 
         // varre o vetor de frames para ver se
         // a página já está lá
@@ -111,7 +110,7 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
             // primeiro ve se tem algum frame vazio pra colocar
             for(int k = 0; k < available_frames; k++){
                 if(frames[k].page == 0){
-                    std::cout << "entrou no frame vazio, com k = " << k << std::endl;
+                    // std::cout << "entrou no frame vazio, com k = " << k << std::endl;
                     frames[k].page = frame_teste.page;
                     frames[k].page_index = frame_teste.page_index;
                     alr_put = true;
@@ -121,7 +120,7 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
             
             // se não, pega o menor índice e substitui
             if(!alr_put){
-                std::cout << "entrou na substituição por menor\n";
+                // std::cout << "entrou na substituição por menor\n";
                 frames[index_frame].page = frame_teste.page;
                 frames[index_frame].page_index = frame_teste.page_index;
             }
@@ -142,8 +141,6 @@ int main(int argc, const char **argv){
     int total_page_faults = getTotalPageFaults(available_frames, addresses);
     
     std::cout << "page faults no LRU = " << total_page_faults << std::endl;
-
-
     
     return 0;
 }
