@@ -67,7 +67,7 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
             // printando o map bits_referencia
             std::cout << "map bits_referencia\n";
             for(const auto& elem : bits_referencia){
-                std::cout << elem.first << " " << elem.second << "\n";
+                std::cout << std::hex << elem.first << " " << std::hex << elem.second << "\n";
             }
 
             foi_chamado.insert({addresses[i], true});
@@ -75,7 +75,7 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
             // printando o map foi_chamado
             std::cout << "map foi_chamado\n";
             for(const auto& elem : foi_chamado){
-                std::cout << elem.first << " " << elem.second << "\n";
+                std::cout << std::hex << elem.first << " " << std::hex << elem.second << "\n";
             }
         }
     }
@@ -90,7 +90,7 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
     // vamos precisar armazenar o índice em que parou no clock
     // inicia em available_frames
     int ind_atual = available_frames;
-    int delay = 1000;
+    int delay = 1;
     delay *= CLOCKS_PER_SEC;
     int i;
 
@@ -99,6 +99,7 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
 
     while(clock() - now < delay){
         for(i = ind_atual; i < addresses.size(); i++){
+            std::cout << "addresses.size() dentro do for = " << addresses.size() << std::endl;
             int menor_index = 1000000, index_frame;
             bool is_in_frames = false;
             Frame frame_teste(addresses[i], i);
@@ -150,7 +151,10 @@ int getTotalPageFaults(int available_frames, std::vector<unsigned int> &addresse
                     frames[menor_index].page_index = frame_teste.page_index;
                 }
             }
+            std::cout << "valor de i = " << i << std::endl;
         }
+        std::cout << "valor de i fora do for = " << i << std::endl;
+        std::cout << "addresses.size() = " << addresses.size() << std::endl;
         if(i < addresses.size()){ // ainda não terminou de processar as páginas
             ind_atual = i - 1; // ajusta o índice atual
             std::cout << "valor de i = " << i << std::endl;
